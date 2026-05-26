@@ -121,16 +121,12 @@ export function classifyTargets(results: HealthCheckResult[]): ConsultationTarge
     if (isElderly) {
       // === 고령자 분류 ===
       // 고혈압/당뇨/이상지질혈증: 질환의심 수준 수치 기준
-      // (정상B 초과 = 수축기 140 이상, 이완기 90 이상, 공복혈당 126 이상, LDL 160 이상)
+      // (정상B 초과 = 수축기 140 초과, 이완기 90 초과, 공복혈당 126 이상, LDL 160 이상)
       
-      // 고혈압 - 수축기 140 이상 또는 이완기 90 이상
-      if (result.systolicBP && result.systolicBP >= 140) {
+      // 고혈압 - 수축기 140 초과 AND 이완기 90 초과 (둘 다 초과해야 해당)
+      if (result.systolicBP && result.systolicBP > 140 && result.diastolicBP && result.diastolicBP > 90) {
         findings.push("고혈압")
-        reasons.push(`수축기혈압 ${result.systolicBP}mmHg`)
-      }
-      if (result.diastolicBP && result.diastolicBP >= 90) {
-        if (!findings.includes("고혈압")) findings.push("고혈압")
-        reasons.push(`이완기혈압 ${result.diastolicBP}mmHg`)
+        reasons.push(`수축기혈압 ${result.systolicBP}mmHg, 이완기혈압 ${result.diastolicBP}mmHg`)
       }
 
       // 당뇨 - 공복혈당 126 이상
@@ -186,14 +182,10 @@ export function classifyTargets(results: HealthCheckResult[]): ConsultationTarge
     } else {
       // === 고위험군 (고령 제외) - 고위험 수치 기준 ===
 
-      // 고혈압 - 수축기 160 초과, 이완기 100 초과
-      if (result.systolicBP && result.systolicBP > HIGH_RISK_CRITERIA.systolicBP) {
+      // 고혈압 - 수축기 160 초과 AND 이완기 100 초과 (둘 다 초과해야 해당)
+      if (result.systolicBP && result.systolicBP > HIGH_RISK_CRITERIA.systolicBP && result.diastolicBP && result.diastolicBP > HIGH_RISK_CRITERIA.diastolicBP) {
         findings.push("고혈압")
-        reasons.push(`수축기혈압 ${result.systolicBP}mmHg`)
-      }
-      if (result.diastolicBP && result.diastolicBP > HIGH_RISK_CRITERIA.diastolicBP) {
-        if (!findings.includes("고혈압")) findings.push("고혈압")
-        reasons.push(`이완기혈압 ${result.diastolicBP}mmHg`)
+        reasons.push(`수축기혈압 ${result.systolicBP}mmHg, 이완기혈압 ${result.diastolicBP}mmHg`)
       }
 
       // 당뇨 - 공복혈당 250 초과

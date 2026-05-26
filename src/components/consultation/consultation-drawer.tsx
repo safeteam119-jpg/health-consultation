@@ -12,13 +12,14 @@ import { formatDate, getDDay } from "@/lib/utils"
 import { calculateNextConsultationDate } from "@/lib/criteria"
 import { FINDINGS_GUIDANCE } from "@/lib/criteria"
 import { CONSULTATION_MATERIALS } from "@/lib/consultation-materials"
-import { Phone, PhoneOff, Calendar, FileText, Plus, Clock, Image, Pencil, Save, X, BookOpen } from "lucide-react"
+import { Phone, PhoneOff, Calendar, FileText, Plus, Clock, Image, Pencil, Save, X, BookOpen, Trash2 } from "lucide-react"
 
 interface ConsultationDrawerProps {
   target: ConsultationTarget | null
   open: boolean
   onClose: () => void
   onSaveRecord: (targetId: string, record: Omit<ConsultationRecord, "id" | "targetId" | "createdAt">) => Promise<void>
+  onDeleteRecord: (targetId: string, recordId: string) => Promise<void>
   onUpdateNextDate: (targetId: string, date: string) => Promise<void>
   onSaveEvidence: (targetId: string, imageData: string, description: string) => Promise<void>
   cycleSettings: ConsultationCycleSettings
@@ -30,6 +31,7 @@ export function ConsultationDrawer({
   open,
   onClose,
   onSaveRecord,
+  onDeleteRecord,
   onUpdateNextDate,
   onSaveEvidence,
   cycleSettings,
@@ -301,6 +303,11 @@ export function ConsultationDrawer({
                     setEditingRecordId(null)
                   }}
                   onEditChange={(updates) => setEditForm({ ...editForm, ...updates })}
+                  onDelete={async () => {
+                    if (confirm("이 상담 기록을 삭제하시겠습니까?")) {
+                      await onDeleteRecord(target.id, record.id)
+                    }
+                  }}
                 />
               ))}
             </div>
@@ -573,7 +580,7 @@ export function ConsultationDrawer({
   )
 }
 
-function ConsultationHistoryItem({ record, isEditing, editForm, onStartEdit, onCancelEdit, onSaveEdit, onEditChange }: {
+function ConsultationHistoryItem({ record, isEditing, editForm, onStartEdit, onCancelEdit, onSaveEdit, onEditChange, onDelete }: {
   record: ConsultationRecord
   isEditing: boolean
   editForm: Partial<ConsultationRecord>
@@ -581,6 +588,7 @@ function ConsultationHistoryItem({ record, isEditing, editForm, onStartEdit, onC
   onCancelEdit: () => void
   onSaveEdit: () => void
   onEditChange: (updates: Partial<ConsultationRecord>) => void
+  onDelete: () => void
 }) {
   if (isEditing) {
     return (
@@ -697,6 +705,9 @@ function ConsultationHistoryItem({ record, isEditing, editForm, onStartEdit, onC
           <span className="text-gray-500">{record.counselor}</span>
           <button onClick={onStartEdit} className="text-gray-400 hover:text-blue-600 p-1" title="수정">
             <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button onClick={onDelete} className="text-gray-400 hover:text-red-600 p-1" title="삭제">
+            <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>

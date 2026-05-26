@@ -132,6 +132,42 @@ export async function addConsultationRecord(targetId: string, record: Consultati
   return targets[index]
 }
 
+// === 상담 기록 삭제 ===
+export async function deleteConsultationRecord(targetId: string, recordId: string): Promise<ConsultationTarget | null> {
+  const targets = await getTargets()
+  const index = targets.findIndex(t => t.id === targetId)
+  if (index === -1) return null
+
+  if (!targets[index].consultations) targets[index].consultations = []
+  targets[index].consultations = targets[index].consultations.filter(c => c.id !== recordId)
+  targets[index].updatedAt = new Date().toISOString()
+
+  // 상담 단계 재계산
+  const consultations = targets[index].consultations
+  if (consultations.length === 0) {
+    targets[index].consultationPhase = "none"
+    targets[index].needFirstConsultation = true
+    targets[index].needSecondConsultation = false
+    targets[index].progressStatus = "not_started"
+  } else {
+    const lastRecord = consultations[consultations.length - 1]
+    if (!lastRecord.callConnected) {
+      targets[index].consultationPhase = "unreachable"
+    } else if (lastRecord.consultationType === "second") {
+      targets[index].consultationPhase = "second_done"
+      targets[index].needFirstConsultation = false
+      targets[index].needSecondConsultation = false
+    } else if (lastRecord.consultationType === "first") {
+      targets[index].consultationPhase = "first_done"
+      targets[index].needFirstConsultation = false
+      targets[index].needSecondConsultation = true
+    }
+  }
+
+  await saveTargets(targets)
+  return targets[index]
+}
+
 // === 상담 주기 설정 ===
 export async function getCycleSettings(): Promise<ConsultationCycleSettings> {
   return readJsonFile<ConsultationCycleSettings>("settings.json", DEFAULT_CYCLE_SETTINGS)

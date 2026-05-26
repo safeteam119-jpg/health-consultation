@@ -12,8 +12,9 @@ import { TargetTable } from "@/components/consultation/target-table"
 import { ConsultationDrawer } from "@/components/consultation/consultation-drawer"
 import { FilterBar } from "@/components/consultation/filter-bar"
 import { SettingsModal } from "@/components/consultation/settings-modal"
+import { AddTargetModal } from "@/components/consultation/add-target-modal"
 import { Button } from "@/components/ui/button"
-import { Settings, LogOut, BookOpen, Download } from "lucide-react"
+import { Settings, LogOut, BookOpen, Download, UserPlus } from "lucide-react"
 import * as XLSX from "xlsx"
 
 export default function ConsultationPage() {
@@ -24,6 +25,7 @@ export default function ConsultationPage() {
   const [selectedTarget, setSelectedTarget] = useState<ConsultationTarget | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [addTargetOpen, setAddTargetOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [lastUploadDate, setLastUploadDate] = useState<string | null>(null)
 
@@ -251,6 +253,33 @@ export default function ConsultationPage() {
     }
   }
 
+  // 상담 기록 삭제
+  const handleDeleteRecord = async (targetId: string, recordId: string) => {
+    const res = await fetch(`/api/targets/${targetId}/consultation`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ recordId }),
+    })
+
+    if (res.ok) {
+      await loadData()
+      const data = await res.json()
+      setSelectedTarget(data.target)
+    }
+  }
+
+  // 수기 대상자 추가
+  const handleAddTarget = async (target: ConsultationTarget) => {
+    const res = await fetch("/api/targets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targets: [target] }),
+    })
+    if (res.ok) {
+      await loadData()
+    }
+  }
+
   // ?�정 ?�??
   const handleSaveSettings = async (settings: ConsultationCycleSettings) => {
     const res = await fetch("/api/settings", {
@@ -315,6 +344,10 @@ export default function ConsultationPage() {
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-gray-900">건강검진 유소견자 상담관리</h1>
             <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setAddTargetOpen(true)} className="text-gray-600 hidden sm:flex">
+                <UserPlus className="h-4 w-4 mr-1" />
+                수기 추가
+              </Button>
               <Button variant="ghost" size="sm" onClick={() => router.push("/consultation/criteria")} className="text-gray-600 hidden sm:flex">
                 <BookOpen className="h-4 w-4 mr-1" />
                 관리 기준
@@ -358,8 +391,12 @@ export default function ConsultationPage() {
         <DashboardStats targets={targetsWithStatus} />
 
         {/* 모바일 기준 버튼 */}
-        <div className="sm:hidden">
-          <Button variant="outline" size="sm" onClick={() => router.push("/consultation/criteria")} className="w-full">
+        <div className="sm:hidden flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setAddTargetOpen(true)} className="flex-1">
+            <UserPlus className="h-4 w-4 mr-1" />
+            수기 추가
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => router.push("/consultation/criteria")} className="flex-1">
             <BookOpen className="h-4 w-4 mr-1" />
             관리 기준 보기
           </Button>
@@ -436,10 +473,18 @@ export default function ConsultationPage() {
           setSelectedTarget(null)
         }}
         onSaveRecord={handleSaveRecord}
+        onDeleteRecord={handleDeleteRecord}
         onUpdateNextDate={handleUpdateNextDate}
         onSaveEvidence={handleSaveEvidence}
         cycleSettings={cycleSettings}
         counselorName={user?.name || "관리자"}
+      />
+
+      {/* 수기 대상자 추가 모달 */}
+      <AddTargetModal
+        open={addTargetOpen}
+        onClose={() => setAddTargetOpen(false)}
+        onAdd={handleAddTarget}
       />
 
       {/* 설정 모달 */}
