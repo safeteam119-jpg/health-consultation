@@ -47,9 +47,21 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    const { recordId } = await request.json()
+    const url = new URL(request.url)
+    const recordId = url.searchParams.get("recordId")
 
     if (!recordId) {
+      // fallback: body에서도 시도
+      try {
+        const body = await request.json()
+        if (body.recordId) {
+          const target = await deleteConsultationRecord(id, body.recordId)
+          if (!target) {
+            return NextResponse.json({ error: "대상자를 찾을 수 없습니다." }, { status: 404 })
+          }
+          return NextResponse.json({ target })
+        }
+      } catch {}
       return NextResponse.json({ error: "삭제할 상담 기록 ID가 필요합니다." }, { status: 400 })
     }
 

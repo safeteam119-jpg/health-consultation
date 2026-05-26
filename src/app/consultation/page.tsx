@@ -255,10 +255,8 @@ export default function ConsultationPage() {
 
   // 상담 기록 삭제
   const handleDeleteRecord = async (targetId: string, recordId: string) => {
-    const res = await fetch(`/api/targets/${targetId}/consultation`, {
+    const res = await fetch(`/api/targets/${targetId}/consultation?recordId=${recordId}`, {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ recordId }),
     })
 
     if (res.ok) {
