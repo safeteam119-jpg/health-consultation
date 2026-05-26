@@ -1,3 +1,3 @@
 git add .
-git commit -m "update: manual-target-add, consultation-delete, BP-criteria-fix"
+git commit -m "fix: consultation-delete-via-query-param, manual-add-separate-api"
 git push

@@ -268,10 +268,10 @@ export default function ConsultationPage() {
 
   // 수기 대상자 추가
   const handleAddTarget = async (target: ConsultationTarget) => {
-    const res = await fetch("/api/targets", {
+    const res = await fetch(`/api/targets/manual`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ targets: [target] }),
+      body: JSON.stringify({ target }),
     })
     if (res.ok) {
       await loadData()
